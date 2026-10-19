@@ -1,0 +1,110 @@
+(() => {
+  const body = document.body;
+  const languageButton = document.getElementById("langToggle");
+  const menuButton = document.getElementById("menuToggle");
+  const nav = document.getElementById("nav");
+  const form = document.getElementById("inquiryForm");
+  const message = document.getElementById("formMessage");
+
+  let language = "ar";
+
+  function changeLanguage(nextLanguage) {
+    language = nextLanguage;
+    const isArabic = language === "ar";
+
+    document.documentElement.lang = language;
+    document.documentElement.dir = isArabic ? "rtl" : "ltr";
+    body.dir = isArabic ? "rtl" : "ltr";
+    languageButton.textContent = isArabic ? "EN" : "عربي";
+
+    document.querySelectorAll("[data-ar][data-en]").forEach(element => {
+      const text = element.getAttribute(isArabic ? "data-ar" : "data-en");
+
+      if (text.includes("<br>") || text.includes("<em>")) {
+        element.innerHTML = text;
+      } else {
+        element.textContent = text;
+      }
+    });
+  }
+
+  languageButton.addEventListener("click", () => {
+    changeLanguage(language === "ar" ? "en" : "ar");
+  });
+
+  menuButton.addEventListener("click", () => {
+    nav.classList.toggle("open");
+  });
+
+  nav.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      nav.classList.remove("open");
+    });
+  });
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+
+    if (!form.reportValidity()) return;
+
+    const formData = new FormData(form);
+    const isArabic = language === "ar";
+
+    const subject = isArabic
+      ? "طلب استشارة — رَصين"
+      : "Advisory Inquiry — RASEEN";
+
+    const labels = isArabic
+      ? {
+          name: "الاسم",
+          company: "الشركة / الجهة",
+          email: "البريد الإلكتروني",
+          phone: "رقم التواصل",
+          type: "نوع الطلب",
+          details: "تفاصيل الطلب"
+        }
+      : {
+          name: "Name",
+          company: "Company / Organization",
+          email: "Email",
+          phone: "Phone",
+          type: "Inquiry Type",
+          details: "Inquiry Details"
+        };
+
+    const typeField = form.querySelector('[name="type"]');
+    const selected = typeField.options[typeField.selectedIndex];
+    const selectedType = selected
+      ? selected.getAttribute(isArabic ? "data-ar" : "data-en")
+      : "";
+
+    const emailBody = [
+      `${labels.name}: ${formData.get("name")}`,
+      `${labels.company}: ${formData.get("company")}`,
+      `${labels.email}: ${formData.get("email")}`,
+      `${labels.phone}: ${formData.get("phone") || "-"}`,
+      `${labels.type}: ${selectedType || formData.get("type")}`,
+      "",
+      `${labels.details}:`,
+      formData.get("message")
+    ].join("\n");
+
+    message.textContent = isArabic
+      ? "سيُفتح تطبيق البريد لديك لإرسال الطلب. لم تُرسل البيانات تلقائيًا."
+      : "Your email application will open. The form does not automatically transmit data.";
+
+    // استبدل هذا العنوان ببريد الشركة الفعلي قبل النشر.
+    const companyEmail = "YOUR_EMAIL@example.com";
+
+    const mailto =
+      `mailto:${companyEmail}` +
+      `?subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(emailBody)}`;
+
+    window.location.href = mailto;
+  });
+
+  changeLanguage("ar");
+})();
